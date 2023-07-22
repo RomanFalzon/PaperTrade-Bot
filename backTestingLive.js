@@ -1,8 +1,6 @@
 const express = require('express'); //SERVER
 const myAPI = require('./BinanceAPI/binance'); //Binance API
 const myBot = require('./backTestingBot') // Trading bot
-const readline = require('readline');
-
 
 const app = express();
 const port = 3000;  //PORT for Server
@@ -15,31 +13,31 @@ let dateTracker = 0;
 let myFetchedData = [];
 let myTotalArray = [];
 
+
+let botResponse = []
+
 async function fetchData() {
     try {
+        //GETS API DATATA
         myFetchedData = await myAPI.getCandles('BTC', myInterval, myDate);
         myAPI.clearCandles()
 
-        //console.log('CHECKING CANDLES---')
-
-        //console.log('PREVIOUS STICK CLOSE DATE: ', dateTracker)
-        //console.log('CURRENT STICK CLOSE DATE: ', getLastStickDate(myFetchedData))
-
+        //ALWAYS GETS CALLED ON START
+        //CHECKS FOR NEW CANDLES (IF last candle CLOSE DATE exists = candle was closed = push to array = push new candle to bot)
         if(getLastStickDate(myFetchedData) !== dateTracker && getLastStickDate(myFetchedData) !== 'PENDING'){ // NEW STICK - UPDATE STUFF
-            dateTracker = getLastStickDate(myFetchedData) //Update new start time
-            myDate = getLastStickDate(myFetchedData); //UPDATE DATE for API CALL
 
-            //console.log('***NEW STICK MADE***')
-
+            dateTracker, myDate = getLastStickDate(myFetchedData) //Update new start time //UPDATE DATE for API CALL
+        
+            //Appends array with new candles
             myTotalArray = [...myTotalArray, ...myFetchedData]
 
-            //console.log(myTotalArray)
-            //console.log('MY TOTAL ARR COUNT: ', myTotalArray.length)
-           
+            //Call magic bot
+            let myTrades = await myBot.doTrades(passLastCandle(myTotalArray)); //PUSH LAST CANDLE TO BOT
 
-            //CALL TRADING BOT
-            //console.log('Passing DATA to BOT *-*');
-            myBot.doTrades(passLastCandle(myTotalArray)); //PUSH LAST CANDLE TO BOT
+            console.log(passLastCandle(myTotalArray))
+
+            //Pass data for JSON SERVER endpoint
+            botResponse = myTrades;
         }
 
     } catch (error) {
@@ -48,7 +46,9 @@ async function fetchData() {
     }
 }
 
-
+//This checks if close date of last array exists. PENDING candles that have not been closed wont have CLOSE TIMESTAMP
+//Once a call is done, and there is data, it will push the CLOSETIMESTAMP to be used as a STARTSTAMP to get new candles
+//We also get the new closed stick data and store it in fetchDATA (Soon to be  added to LIVE BOT API)
 function getLastStickDate(arr){
     const lastItem = arr[arr.length - 1];
     if (lastItem && Array.isArray(lastItem) && lastItem.length > 6) {
@@ -58,6 +58,7 @@ function getLastStickDate(arr){
     }
 }
 
+//Gets last stick to push to bot
 function passLastCandle(arr){
     return arr[arr.length-1]
 }
@@ -72,7 +73,15 @@ fetchData();
 const interval = 60000; // 10 seconds in milliseconds
 setInterval(fetchData, interval);
 
-// Start the server
+
+
+// SERVER
+app.get('/get-data', (req, res) => {
+    res.json( botResponse );
+});
+  
+
+//JSON ENDPOINT
 app.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);
 });

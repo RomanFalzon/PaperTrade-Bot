@@ -6,14 +6,15 @@ let consecutiveRedCount = 0;
 
 let isInPosition = false;
 
-let myBALANCE = 20000;
+let myBALANCE = 100000;
 let percentage = 0.10;
 
 let currentOpenPoisitionBalance = 0;
 
-let valueAtEnterPosition = 0;
-let valueAtExitPosition = 0;
+let BTCExitValueAtStart = 0; //Enter trade last candle value
+let BTCExitValueAtExit = 0; //Exit trade last candle value
 
+let tradesMade = 0
 
 function checkLoopData(data) {
     //Get open price and close price
@@ -40,7 +41,7 @@ function checkLoopData(data) {
         isInPosition = true;
 
         //ENTER SINGAL
-        enterTrade(openPrice);
+        enterTrade(closePrice);
         consecutiveGreenCount = 0; //Reset Counter
     }
 
@@ -50,73 +51,79 @@ function checkLoopData(data) {
 
         //EXIT SINGAL
         exitTrade(closePrice);
-        resetCounters();
-        
         consecutiveRedCount = 0; //Reset Counter
+        resetCounters() //Reset
     }
 }
 
 function resetCounters(){
-
-    consecutiveGreenCount = 0;
-    consecutiveRedCount = 0;
-
     currentOpenPoisitionBalance = 0;
 
-    valueAtEnterPosition = 0;
-    valueAtExitPosition = 0;
+    BTCExitValueAtStart = 0;
+    BTCExitValueAtExit = 0;
 
 }
 
 
-function enterTrade(valueAtEnter){
-    const tradeAmount = myBALANCE * percentage;
+//SET ENTER TRADE DETAILS BEFORE EXIT------
+//This gets called once, EXIT trade does the logic
+function enterTrade(val){
+    const tradeAmount = myBALANCE; //WAS const tradeAmount = myBALANCE * percentage; before
     currentOpenPoisitionBalance = tradeAmount
 
     console.log('-----------------')
-    console.log('ENTERING TRADE:')
-    console.log('BTC VALUE: ', valueAtEnter)
+    console.log('ENTERING TRADE with value: ', currentOpenPoisitionBalance)
+    console.log('BTC VALUE: ', val)
+    console.log('CURRENT BALANCE: ', myBALANCE)
 
-    valueAtEnterPosition = valueAtEnter;
+    BTCExitValueAtStart = val;
 }
 
 
 
 
-function exitTrade(valueAtExit){
+function exitTrade(val){
     console.log('-----------------')
     console.log('EXITING TRADE:')
     
-    //console.log('BALANCE AT ENTER ', myBALANCE)
-    valueAtExitPosition = valueAtExit
+    BTCExitValueAtExit = val
   
     checkProfitLoss()
 
+    console.log('BTC VALUE WHEN OPENED: ', BTCExitValueAtStart);
+    console.log('BTC VALUE WHEN CLSOED: ', BTCExitValueAtExit);
+
+
     console.log('BALANCE AT EXIT ', myBALANCE)
 
-    //console.log('---')
+    tradesMade++;
 }
 
+
+
+
+
 function checkProfitLoss(){
-    const oldOpenPosition = valueAtEnterPosition;
-    const newClosePosition = valueAtExitPosition;
-    
+
+    const oldOpenPosition = BTCExitValueAtStart;
+    const newClosePosition = BTCExitValueAtExit;
+  
     const myOldBal = currentOpenPoisitionBalance;
     const myNewBal = myOldBal * (newClosePosition / oldOpenPosition);
-    
+  
     const profitLoss = myNewBal - myOldBal;
-    const percentageChange = ((newClosePosition - oldOpenPosition) / oldOpenPosition) * 100;
-    
+    const percentageChange = (profitLoss / myOldBal) * 100; // Calculate percentage change based on profit or loss
+  
     if (profitLoss > 0) {
-        myBALANCE += profitLoss;
-        console.log('PROFIT:', profitLoss);
+      myBALANCE += profitLoss;
+      console.log('PROFIT:', profitLoss.toFixed(8)); // Round the profit to a fixed number of decimal places
     } else if (profitLoss < 0) {
-        myBALANCE += profitLoss;
-        console.log('LOSS:', profitLoss);
+      myBALANCE += profitLoss;
+      console.log('LOSS:', profitLoss.toFixed(8)); // Round the loss to a fixed number of decimal places
     } else {
-        console.log('No profit or loss');
+      console.log('No profit or loss');
     }
-    
+  
     console.log(`Percentage Change: ${percentageChange.toFixed(2)}%`);
 }
 
@@ -131,6 +138,17 @@ async function doTrades(data) {
         for (const data of lastTwoData) {
             checkLoopData(data);
         }
+
+        // Prepare the information to be returned
+        const tradeInfo = {
+            inTrade: isInPosition,
+            btcOnEnter: BTCExitValueAtStart,
+            btcAfterExit: BTCExitValueAtExit,
+            balance: myBALANCE,
+            tradesMade: tradesMade
+        };
+        
+                return tradeInfo;
     } catch (error) {
         console.error('Error:', error.message);
     }
