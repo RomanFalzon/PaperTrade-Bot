@@ -1,15 +1,12 @@
-const fs = require('fs');
-const filePath = './db/db.json';
-
 const candlesToCheck = 2;
-let jsonData = [];
+let myTradingData = [];
 
 let consecutiveGreenCount = 0;
 let consecutiveRedCount = 0;
 
 let isInPosition = false;
 
-let myBALANCE = 1000;
+let myBALANCE = 20000;
 let percentage = 0.10;
 
 let currentOpenPoisitionBalance = 0;
@@ -17,8 +14,8 @@ let currentOpenPoisitionBalance = 0;
 let valueAtEnterPosition = 0;
 let valueAtExitPosition = 0;
 
-function checkLoopData(data) {
 
+function checkLoopData(data) {
     //Get open price and close price
     const openPrice = parseFloat(data[1]);
     const closePrice = parseFloat(data[4]);
@@ -43,9 +40,7 @@ function checkLoopData(data) {
         isInPosition = true;
 
         //ENTER SINGAL
-
         enterTrade(openPrice);
-
         consecutiveGreenCount = 0; //Reset Counter
     }
 
@@ -55,11 +50,23 @@ function checkLoopData(data) {
 
         //EXIT SINGAL
         exitTrade(closePrice);
-
+        resetCounters();
+        
         consecutiveRedCount = 0; //Reset Counter
     }
 }
 
+function resetCounters(){
+
+    consecutiveGreenCount = 0;
+    consecutiveRedCount = 0;
+
+    currentOpenPoisitionBalance = 0;
+
+    valueAtEnterPosition = 0;
+    valueAtExitPosition = 0;
+
+}
 
 
 function enterTrade(valueAtEnter){
@@ -68,7 +75,7 @@ function enterTrade(valueAtEnter){
 
     console.log('-----------------')
     console.log('ENTERING TRADE:')
-    console.log('Current BTC value: ', valueAtEnter)
+    console.log('BTC VALUE: ', valueAtEnter)
 
     valueAtEnterPosition = valueAtEnter;
 }
@@ -79,20 +86,15 @@ function enterTrade(valueAtEnter){
 function exitTrade(valueAtExit){
     console.log('-----------------')
     console.log('EXITING TRADE:')
-
-    console.log('VALUE AT ENTER: ', valueAtEnterPosition)
-    console.log('VALUE AT EXIT: ', valueAtExit)
     
-    console.log('---')
-
-    console.log('BALANCE AT ENTER ', myBALANCE)
+    //console.log('BALANCE AT ENTER ', myBALANCE)
     valueAtExitPosition = valueAtExit
   
     checkProfitLoss()
 
     console.log('BALANCE AT EXIT ', myBALANCE)
 
-    console.log('---')
+    //console.log('---')
 }
 
 function checkProfitLoss(){
@@ -122,11 +124,11 @@ function checkProfitLoss(){
 
 
 
-async function main(data) {
+async function doTrades(data) {
     try {
-        jsonData = data
-
-        for (const data of jsonData) {
+        myTradingData.push(data);
+        const lastTwoData = myTradingData.slice(-candlesToCheck); // Get the last two elements
+        for (const data of lastTwoData) {
             checkLoopData(data);
         }
     } catch (error) {
@@ -134,16 +136,8 @@ async function main(data) {
     }
 }
 
-async function readJsonFile(filePath) {
-    try {
-        const fileContent = await fs.promises.readFile(filePath, 'utf-8');
-        return JSON.parse(fileContent);
-    } catch (error) {
-        throw new Error('Error reading JSON file:', error.message);
-    }
-}
 
 
-module.exports = { main };
+module.exports = { doTrades };
 
 //main();

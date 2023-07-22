@@ -1,5 +1,8 @@
 const express = require('express'); //SERVER
 const myAPI = require('./BinanceAPI/binance'); //Binance API
+const myBot = require('./backTestingBot') // Trading bot
+const readline = require('readline');
+
 
 const app = express();
 const port = 3000;  //PORT for Server
@@ -17,21 +20,26 @@ async function fetchData() {
         myFetchedData = await myAPI.getCandles('BTC', myInterval, myDate);
         myAPI.clearCandles()
 
-        console.log('CHECKING CANDLES---')
+        //console.log('CHECKING CANDLES---')
 
-        console.log('PREVIOUS STICK CLOSE DATE: ', dateTracker)
-        console.log('CURRENT STICK CLOSE DATE: ', getLastStickDate(myFetchedData))
+        //console.log('PREVIOUS STICK CLOSE DATE: ', dateTracker)
+        //console.log('CURRENT STICK CLOSE DATE: ', getLastStickDate(myFetchedData))
 
         if(getLastStickDate(myFetchedData) !== dateTracker && getLastStickDate(myFetchedData) !== 'PENDING'){ // NEW STICK - UPDATE STUFF
             dateTracker = getLastStickDate(myFetchedData) //Update new start time
             myDate = getLastStickDate(myFetchedData); //UPDATE DATE for API CALL
 
-            console.log('***CHANGE OF DATE: NEW STICK MADE***')
+            //console.log('***NEW STICK MADE***')
 
             myTotalArray = [...myTotalArray, ...myFetchedData]
 
-            console.log(myTotalArray)
-            console.log('MY TOTAL ARR COUNT: ', myTotalArray.length)
+            //console.log(myTotalArray)
+            //console.log('MY TOTAL ARR COUNT: ', myTotalArray.length)
+           
+
+            //CALL TRADING BOT
+            //console.log('Passing DATA to BOT *-*');
+            myBot.doTrades(passLastCandle(myTotalArray)); //PUSH LAST CANDLE TO BOT
         }
 
     } catch (error) {
@@ -39,6 +47,7 @@ async function fetchData() {
         console.log('NEW STICK STILL NOT CLOSED')
     }
 }
+
 
 function getLastStickDate(arr){
     const lastItem = arr[arr.length - 1];
@@ -48,6 +57,13 @@ function getLastStickDate(arr){
         return 'PENDING';
     }
 }
+
+function passLastCandle(arr){
+    return arr[arr.length-1]
+}
+
+
+
 
 // Initial data fetch
 fetchData();
