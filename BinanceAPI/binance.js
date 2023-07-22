@@ -44,7 +44,7 @@ async function looper(){
                 startTimeStamp = myNewDate
 
                 //console.log('CLOSE PRICE: ', myData[myData.length-1][4]);
-                console.log('ARRAY COUNT: ', myData.length);
+                //console.log('ARRAY COUNT: ', myData.length);
 
             }
 
