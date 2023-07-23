@@ -1,6 +1,7 @@
 //Last X candled
 const candlesToCheck = 2;
 let myTradingData = [];
+let tableData = [];
 
 //Counter to check candles in a row
 let consecutiveGreenCount = 0;
@@ -17,6 +18,9 @@ let BTCExitValueAtExit = 0; //Exit trade last candle value
 let tradesMade = 0
 
 function checkLoopData(data) {
+
+
+
     //Get open price and close price
     const openPrice = parseFloat(data[1]);
     const closePrice = parseFloat(data[4]);
@@ -51,21 +55,49 @@ function tradeMgmt(closePrice){
 
 
 function checkArrows(openPrice, closePrice, myTimeStamp){
+
     //Check candle
     if (openPrice > closePrice) {
-        console.log('RED', myTimeStamp, consecutiveRedCount);
-    
+
+        const data = {
+            Color: 'RED',
+            Stamp: myTimeStamp,
+            Price: closePrice,
+            Balance: myBALANCE
+        };
+
+        tableData.push(data);
+
+        console.table(tableData[tableData.length-1]);
+
         consecutiveRedCount++;
         consecutiveGreenCount = 0;
+
+
+        //console.log(tableData)
+        
     } else if (openPrice < closePrice) {
-        console.log('GREEN', myTimeStamp, consecutiveGreenCount);
-    
+        const data = {
+            Color: 'GREEN',
+            Stamp: myTimeStamp,
+            Price: closePrice,
+            Balance: myBALANCE
+        };
+        tableData.push(data);
+
+        console.table(tableData[tableData.length-1]);
+
         consecutiveGreenCount++;
         consecutiveRedCount = 0;
+
+        //console.log(tableData)
     } else {
-            //console.log('EMPTY');
+        //console.log('EMPTY');
     }
 }
+
+
+
 
 let resetCounters = () => { currentOpenPoisitionBalance, BTCExitValueAtStart, BTCExitValueAtExit = 0; }
 
@@ -79,9 +111,8 @@ function enterTrade(val){
     currentOpenPoisitionBalance = tradeAmount
 
     console.log('-----------------')
-    console.log('ENTERING TRADE with value: ', currentOpenPoisitionBalance)
-    console.log('BTC VALUE: ', val)
-    console.log('CURRENT BALANCE: ', myBALANCE)
+    console.log('ENTERING TRADE WITH $', currentOpenPoisitionBalance)
+    console.log('BTC VALUE: ', val, 'CURRENT BALANCE: ', myBALANCE)
 
     BTCExitValueAtStart = val;
 }
@@ -139,15 +170,21 @@ function checkProfitLoss(){
 async function doTrades(data) {
     try {
         myTradingData.push(data);
-        //const lastTwoData = myTradingData.slice(-candlesToCheck); // Get the last two elements
+       
 
         checkLoopData(myTradingData[myTradingData.length - 1]);
+
+        //THIS IS BEST FOR HISTORICAL
+
+        //const lastTwoData = myTradingData.slice(-candlesToCheck); // Get the last two elements
         /*
         for (const data of lastTwoData) {
             checkLoopData(data);
         }
-*/
+        */
 
+        //-------------
+        
         // Prepare the information to be returned
         const tradeInfo = {
             inTrade: isInPosition,

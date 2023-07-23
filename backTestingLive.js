@@ -38,6 +38,8 @@ async function fetchData() {
 
             //Pass data for JSON SERVER endpoint
             botResponse = myTrades;
+        }else{
+            //console.log('PENDING NEW CANDLE DATE')
         }
 
     } catch (error) {
@@ -68,7 +70,7 @@ let passLastCandle = (arr) => arr[arr.length-1];
 fetchData();
 
 // Schedule data fetch every 10 seconds
-const interval = 60000; // 10 seconds in milliseconds
+const interval = 10000; // 10 seconds in milliseconds
 setInterval(fetchData, interval);
 
 
