@@ -20,7 +20,7 @@ function checkLoopData(data) {
     //Get open price and close price
     const openPrice = parseFloat(data[1]);
     const closePrice = parseFloat(data[4]);
-    console.log('Close price:', closePrice)
+    //console.log('Close price:', closePrice)
     const myTimeStamp = data[6];
 
     checkArrows(openPrice, closePrice, myTimeStamp); //Counter for last X candles and output arrow COLOR
@@ -53,12 +53,12 @@ function tradeMgmt(closePrice){
 function checkArrows(openPrice, closePrice, myTimeStamp){
     //Check candle
     if (openPrice > closePrice) {
-        console.log('RED', myTimeStamp, consecutiveRedCount++);
+        console.log('RED', myTimeStamp, consecutiveRedCount);
     
         consecutiveRedCount++;
         consecutiveGreenCount = 0;
     } else if (openPrice < closePrice) {
-        console.log('GREEN', myTimeStamp, consecutiveGreenCount++);
+        console.log('GREEN', myTimeStamp, consecutiveGreenCount);
     
         consecutiveGreenCount++;
         consecutiveRedCount = 0;
@@ -139,9 +139,9 @@ function checkProfitLoss(){
 async function doTrades(data) {
     try {
         myTradingData.push(data);
-        const lastTwoData = myTradingData.slice(-candlesToCheck); // Get the last two elements
+        //const lastTwoData = myTradingData.slice(-candlesToCheck); // Get the last two elements
 
-        checkLoopData(lastTwoData[lastTwoData.length - 1]);
+        checkLoopData(myTradingData[myTradingData.length - 1]);
         /*
         for (const data of lastTwoData) {
             checkLoopData(data);
