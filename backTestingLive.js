@@ -5,7 +5,7 @@ const myBot = require('./backTestingBot') // Trading bot
 const app = express();
 const port = 3000;  //PORT for Server
 
-let myDate = Date.now() -100000; //BINANCE API DATE ex: '07-21-2023 00:00:00' or UNIX
+let myDate = Date.now(); //BINANCE API DATE ex: '07-21-2023 00:00:00' or UNIX
 let myInterval = '1m' //BINANCE API INTERVAL
 
 let dateTracker = 0;
@@ -34,7 +34,7 @@ async function fetchData() {
             //Call magic bot
             let myTrades = await myBot.doTrades(passLastCandle(myTotalArray)); //PUSH LAST CANDLE TO BOT
 
-            console.log(passLastCandle(myTotalArray))
+            //console.log(myTotalArray)
 
             //Pass data for JSON SERVER endpoint
             botResponse = myTrades;
@@ -59,9 +59,7 @@ function getLastStickDate(arr){
 }
 
 //Gets last stick to push to bot
-function passLastCandle(arr){
-    return arr[arr.length-1]
-}
+let passLastCandle = (arr) => arr[arr.length-1];
 
 
 
@@ -72,6 +70,9 @@ fetchData();
 // Schedule data fetch every 10 seconds
 const interval = 60000; // 10 seconds in milliseconds
 setInterval(fetchData, interval);
+
+
+
 
 
 

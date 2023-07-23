@@ -1,16 +1,16 @@
+//Last X candled
 const candlesToCheck = 2;
 let myTradingData = [];
 
+//Counter to check candles in a row
 let consecutiveGreenCount = 0;
 let consecutiveRedCount = 0;
 
 let isInPosition = false;
 
 let myBALANCE = 100000;
-let percentage = 0.10;
 
 let currentOpenPoisitionBalance = 0;
-
 let BTCExitValueAtStart = 0; //Enter trade last candle value
 let BTCExitValueAtExit = 0; //Exit trade last candle value
 
@@ -20,21 +20,14 @@ function checkLoopData(data) {
     //Get open price and close price
     const openPrice = parseFloat(data[1]);
     const closePrice = parseFloat(data[4]);
+    console.log('Close price:', closePrice)
+    const myTimeStamp = data[6];
 
-    //Check candle
-    if (openPrice > closePrice) {
-        console.log('RED');
-        consecutiveRedCount++;
-        consecutiveGreenCount = 0;
-     } else if (openPrice < closePrice) {
-        console.log('GREEN');
-        consecutiveGreenCount++;
-        consecutiveRedCount = 0;
-    } else {
-        //console.log('EMPTY');
-    }
+    checkArrows(openPrice, closePrice, myTimeStamp); //Counter for last X candles and output arrow COLOR
+    tradeMgmt(closePrice); //checks checkArrows setters, once conditions met, call open/close trades
+}
 
-
+function tradeMgmt(closePrice){
     //Call positions based on check candle
     if (consecutiveGreenCount === candlesToCheck && !isInPosition) {
         //console.log('Enter signal');
@@ -56,13 +49,27 @@ function checkLoopData(data) {
     }
 }
 
-function resetCounters(){
-    currentOpenPoisitionBalance = 0;
 
-    BTCExitValueAtStart = 0;
-    BTCExitValueAtExit = 0;
-
+function checkArrows(openPrice, closePrice, myTimeStamp){
+    //Check candle
+    if (openPrice > closePrice) {
+        console.log('RED', myTimeStamp, consecutiveRedCount++);
+    
+        consecutiveRedCount++;
+        consecutiveGreenCount = 0;
+    } else if (openPrice < closePrice) {
+        console.log('GREEN', myTimeStamp, consecutiveGreenCount++);
+    
+        consecutiveGreenCount++;
+        consecutiveRedCount = 0;
+    } else {
+            //console.log('EMPTY');
+    }
 }
+
+let resetCounters = () => { currentOpenPoisitionBalance, BTCExitValueAtStart, BTCExitValueAtExit = 0; }
+
+
 
 
 //SET ENTER TRADE DETAILS BEFORE EXIT------
@@ -88,12 +95,10 @@ function exitTrade(val){
     
     BTCExitValueAtExit = val
   
-    checkProfitLoss()
+    checkProfitLoss();
 
     console.log('BTC VALUE WHEN OPENED: ', BTCExitValueAtStart);
     console.log('BTC VALUE WHEN CLSOED: ', BTCExitValueAtExit);
-
-
     console.log('BALANCE AT EXIT ', myBALANCE)
 
     tradesMade++;
@@ -135,9 +140,13 @@ async function doTrades(data) {
     try {
         myTradingData.push(data);
         const lastTwoData = myTradingData.slice(-candlesToCheck); // Get the last two elements
+
+        checkLoopData(lastTwoData[lastTwoData.length - 1]);
+        /*
         for (const data of lastTwoData) {
             checkLoopData(data);
         }
+*/
 
         // Prepare the information to be returned
         const tradeInfo = {
